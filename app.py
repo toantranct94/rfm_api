@@ -1,12 +1,7 @@
 import pandas as pd # for dataframes
 import matplotlib.pyplot as plt # for plotting graphs
-import seaborn as sns # for plotting graphs
-import datetime as dt
 import numpy as np
 from sklearn.cluster import KMeans
-from scipy import stats
-from scipy.stats import kruskal
-from statsmodels.graphics.gofplots import qqplot
 from flask import Flask, render_template, request, redirect, flash, url_for, jsonify
 import os
 import json 
@@ -162,4 +157,4 @@ def getSegmentCustomerIds():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
