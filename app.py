@@ -125,7 +125,6 @@ def getSegmentsWithCount():
             return jsonify(result)
         except:
             return jsonify({'message': 'Error'})
-        pass
     else:
         return jsonify({'message': 'The GET method is not supported for this route'})
 

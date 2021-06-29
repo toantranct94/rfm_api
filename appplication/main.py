@@ -121,12 +121,10 @@ def getSegmentsWithCount():
     if request.method == 'POST':
         try:
             data = json.loads(request.data)
-            data = json.loads(request.data)
             result = rfm_json(data)
             return jsonify(result)
         except:
             return jsonify({'message': 'Error'})
-        pass
     else:
         return jsonify({'message': 'The GET method is not supported for this route'})
 
