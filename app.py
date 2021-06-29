@@ -112,6 +112,10 @@ def rfm_json(data, filter_option=''):
 
     return filtered_df['customer_id'].values.tolist()
 
+@app.route("/")
+def home_view():
+    return "<h1>It works</h1>"
+
 @app.route('/getSegmentsWithCount', methods=['POST'])
 def getSegmentsWithCount():
     if request.method == 'POST':
