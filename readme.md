@@ -66,3 +66,16 @@ python app.py
 ]
 ```
 
+# DEPLOYMENT
+
+Follow the instructions to deploy with ```heroku``` 
+
+[https://devcenter.heroku.com/articles/getting-started-with-python](https://devcenter.heroku.com/articles/getting-started-with-python)
+
+Note: every required files for deploying with ```heroku``` are prepared, including:
+
+ - requirements.txt
+ - app.json
+ - Procfile
+ - Procfile.windows
+ - runtime.txt
