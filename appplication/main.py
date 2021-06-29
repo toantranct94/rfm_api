@@ -121,9 +121,9 @@ def getSegmentsWithCount():
     if request.method == 'POST':
         try:
             data = json.loads(request.data)
-            if len(data) == 1:
-                result = rfm_json(data)
-                return jsonify(result)
+            data = json.loads(request.data)
+            result = rfm_json(data)
+            return jsonify(result)
         except:
             return jsonify({'message': 'Error'})
         pass

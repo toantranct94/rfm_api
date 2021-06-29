@@ -75,7 +75,6 @@ Follow the instructions to deploy with ```heroku```
 Note: every required files for deploying with ```heroku``` are prepared, including:
 
  - requirements.txt
- - app.json
  - Procfile
  - Procfile.windows
  - runtime.txt
