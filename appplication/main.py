@@ -102,15 +102,19 @@ def rfm_json(data, filter_option=''):
                 }
 
     # For API getSegmentCustomerIds
-    recency_range = filter_option[0]['recency']
-    frequency_range = filter_option[1]['frequency']
-
-
-
-    filtered_df = user.query('RecencyCluster >= {} and RecencyCluster <= {} and FrequencyCluster >= {} and FrequencyCluster <= {}'
+    results = []
+    for name, option in filter_option.items():
+        recency_range = option[0]['recency']
+        frequency_range = option[1]['frequency']
+        filtered_df = user.query('RecencyCluster >= {} and RecencyCluster <= {} and FrequencyCluster >= {} and FrequencyCluster <= {}'
         .format(recency_range['min'], recency_range['max'], frequency_range['min'], frequency_range['max']))
+        
+        results.append({
+            name: filtered_df['customer_id'].values.tolist()
+        })
+        
 
-    return filtered_df['customer_id'].values.tolist()
+    return results
 
 @app.route("/")
 def home_view():
@@ -132,24 +136,19 @@ def getSegmentsWithCount():
 def getSegmentCustomerIds():
     if request.method == 'POST':
         data_filter = json.loads(request.data)
-        if len(data_filter) == 2:
-            data = data_filter[0]
-            filter_option = data_filter[1]
+
+        if "data" not in data_filter and "filters" not in data_filter:
+            return jsonify({'message': 'Data is invalid'})
+
+        data = data_filter["data"]
+        filter_option = data_filter["filters"]
+
+        if len(filter_option) == 0:
+            return jsonify({'message': 'Filter is invalid'})
+
+        result = rfm_json(data, filter_option)
+        return jsonify(result)
             
-            recency_range = filter_option[0]['recency']
-            frequency_range = filter_option[1]['frequency']
-
-            if recency_range['min'] < 0 or recency_range['max'] < 0 or frequency_range['min'] < 0 or frequency_range['max'] < 0:
-                return jsonify({'message': 'Filter value can not be negative'})
-
-            if recency_range['min'] > recency_range['max']:
-                return jsonify({'message': 'The the min is greater then max'})
-
-            if frequency_range['min'] > frequency_range['max']:
-                return jsonify({'message': 'The the min is greater then max'})
-
-            result = rfm_json(data, filter_option)
-            return jsonify(result)
         try:
             pass
         except:
@@ -157,3 +156,6 @@ def getSegmentCustomerIds():
     else:
         return jsonify({'message': 'The GET method is not supported for this route'})
 
+
+if __name__ == "__main__":
+    app.run()

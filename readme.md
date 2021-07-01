@@ -153,23 +153,83 @@ Once the app has deployed, the API can be served as:
 **Input**
 
 ```
-[
-    {"index":0,"customer_id":"vpnqlkmaoasmi","created_at_date":"2021-03-26 13:24:44.234000","order_number":"GV45919","amount":1990.0},
-    {"index":1,"customer_id":"14cslklvjwtrs","created_at_date":"2021-03-27 13:00:19.942000","order_number":"GV46095","amount":1900.0}
-],
-[
-    {"recency": {"min": 1, "max": 2}},
-    {"frequency": {"min": 4, "max": 5}}
-]
+{
+    "data": [
+        {
+            "index": 0,"customer_id": "vpnqlkmaoasmi",
+            "created_at_date": "2021-03-26 13:24:44.234000",
+            "order_number": "GV45919", "amount": 1990.0
+        },
+        {
+            "index": 1,
+            "customer_id": "14cslklvjwtrs",
+            "created_at_date": "2021-03-27 13:00:19.942000",
+            "order_number": "GV46095",
+            "amount": 1900.0
+        },
+        {
+            "index": 2,
+            "customer_id": "wsw4lkl6ugfaf",
+            "created_at_date": "2021-03-27 13:05:37.651000",
+            "order_number": "GV46096",
+            "amount": 500.0
+        }
+    ],
+    "filters": {
+        "segment-a": [
+            {
+                "recency": {
+                    "min": 1,
+                    "max": 2
+                }
+            },
+            {
+                "frequency": {
+                    "min": 4,
+                    "max": 5
+                }
+            }
+        ],
+        "segment-b": [
+            {
+                "recency": {
+                    "min": 1,
+                    "max": 2
+                }
+            },
+            {
+                "frequency": {
+                    "min": 4,
+                    "max": 5
+                }
+            }
+        ]
+    }
+}
 ```
 
 **Output**
 
 ```
 [
-    "14cslkm0hn3dw",
-    "1xh60ckd7ykpciwzp2",
-    "1xh60ck9lzkk1efniw"
+    {
+        "segment-a": [
+            "1xh60cki7pkj2pqxz5",
+            "14cslkm0hn3dw",
+            "1xh60ckd7ykpciwzp2",
+            "1xh60ck9lzkk1efniw",
+            "15ee6qlkktfq4yo"
+        ]
+    },
+    {
+        "segment-b": [
+            "1xh60cki7pkj2pqxz5",
+            "14cslkm0hn3dw",
+            "1xh60ckd7ykpciwzp2",
+            "1xh60ck9lzkk1efniw",
+            "15ee6qlkktfq4yo"
+        ]
+    }
 ]
 ```
 
