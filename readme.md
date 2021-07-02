@@ -233,6 +233,89 @@ Once the app has deployed, the API can be served as:
 ]
 ```
 
+ - Get Segments: `POST` [https://your-app-name.herokuapp.com/getSegmentCustomerCount](https://your-app-name.herokuapp.com/getSegmentCustomerCount)
+
+
+**Input**
+
+```
+{
+    "data": [
+        {
+            "index": 0,"customer_id": "vpnqlkmaoasmi",
+            "created_at_date": "2021-03-26 13:24:44.234000",
+            "order_number": "GV45919", "amount": 1990.0
+        },
+        {
+            "index": 1,
+            "customer_id": "14cslklvjwtrs",
+            "created_at_date": "2021-03-27 13:00:19.942000",
+            "order_number": "GV46095",
+            "amount": 1900.0
+        },
+        {
+            "index": 2,
+            "customer_id": "wsw4lkl6ugfaf",
+            "created_at_date": "2021-03-27 13:05:37.651000",
+            "order_number": "GV46096",
+            "amount": 500.0
+        }
+    ],
+    "filters": {
+        "segment-a": [
+            {
+                "recency": {
+                    "min": 1,
+                    "max": 2
+                }
+            },
+            {
+                "frequency": {
+                    "min": 4,
+                    "max": 5
+                }
+            }
+        ],
+        "segment-b": [
+            {
+                "recency": {
+                    "min": 1,
+                    "max": 2
+                }
+            },
+            {
+                "frequency": {
+                    "min": 4,
+                    "max": 5
+                }
+            }
+        ]
+    }
+}
+```
+
+**Output**
+
+```
+{
+    "rfm_defenation": {
+        "frequency": {"1":16557,"2":5712,"3":1875,"4":900,"5":101},
+        "recency": {
+            "1": 6,
+            "2": 27,
+            "3": 48,
+            "4": 71,
+            "5": 95
+        }
+    },
+    "segment_results": {
+        "segment-a": 3,
+        "segment-b": 3
+    }
+}
+```
+
+
 # Sample data
 
 The testing data can be found at ```orders.json``` which is converted from the ```orders.csv``` for testing purpose.

@@ -5,6 +5,7 @@ from sklearn.cluster import KMeans
 from flask import Flask, render_template, request, redirect, flash, url_for, jsonify
 import os
 import json 
+import datetime
 
 app = Flask(__name__)
 uploads_dir = './upload'
@@ -21,7 +22,7 @@ def order_cluster(cluster_field_name, target_field_name,data,ascending):
     return data_final
 
 
-def rfm_json(data, filter_option=''):
+def rfm_json(data, filter_option='', count=False):
     n_clusters = 5
     df = pd.json_normalize(data)
     df['created_at_date'] = pd.to_datetime(df['created_at_date'])
@@ -38,8 +39,8 @@ def rfm_json(data, filter_option=''):
     max_purchase['Recency'] = (max_purchase['MaxPurchaseDate'].max() - max_purchase['MaxPurchaseDate']).dt.days
 
     #merge this dataframe to the new user dataframe
-    user = pd.merge(user, max_purchase[['customer_id','Recency']], on='customer_id')
-    kmeans = KMeans(n_clusters=n_clusters)
+    user = pd.merge(user, max_purchase[['customer_id','Recency', 'MaxPurchaseDate']], on='customer_id')
+    kmeans = KMeans(n_clusters=n_clusters, random_state=1)
     kmeans.fit(user[['Recency']])
     user['RecencyCluster'] = kmeans.predict(user[['Recency']])
 
@@ -48,7 +49,7 @@ def rfm_json(data, filter_option=''):
     user = order_cluster('RecencyCluster', 'Recency',user,False)
     #k-means
 
-    kmeans = KMeans(n_clusters=n_clusters)
+    kmeans = KMeans(n_clusters=n_clusters, random_state=1)
     kmeans.fit(user[['Recency']])
     user['RecencyCluster'] = kmeans.predict(user[['Recency']])
 
@@ -63,7 +64,7 @@ def rfm_json(data, filter_option=''):
     user = pd.merge(user, frequency, on='customer_id')
 
     #k-means
-    kmeans = KMeans(n_clusters=n_clusters)
+    kmeans = KMeans(n_clusters=n_clusters, random_state=1)
     kmeans.fit(user[['Frequency']])
     user['FrequencyCluster'] = kmeans.predict(user[['Frequency']])
 
@@ -81,7 +82,7 @@ def rfm_json(data, filter_option=''):
     user = pd.merge(user, monetary, on='customer_id')
 
     #apply clustering
-    kmeans = KMeans(n_clusters=n_clusters)
+    kmeans = KMeans(n_clusters=n_clusters, random_state=1)
     kmeans.fit(user[['Monetary']])
     user['MonetaryCluster'] = kmeans.predict(user[['Monetary']])
 
@@ -101,6 +102,36 @@ def rfm_json(data, filter_option=''):
                     'monetary': monetary
                 }
 
+    # For API getSegmentCustomerCount
+    if count:
+        frequency = pd.merge(df, user, on='customer_id').groupby(['FrequencyCluster'])['customer_id'].count().set_axis([x + 1 for x in range(n_clusters)], axis='index').to_json()
+        recency = {}
+        for i in range(n_clusters):
+            temp = user.query("RecencyCluster == {}".format(i))
+            max_date = datetime.datetime.today() - temp["MaxPurchaseDate"].max()
+            recency[str(i+1)] =  max_date.days
+
+        results =   {
+                        "rfm_defenation": {
+                            "frequency": frequency,
+                            "recency": recency
+                        },
+                        "segment_results": {
+
+                        }
+                    }
+
+        for name, option in filter_option.items():
+            recency_range = option[0]['recency']
+            frequency_range = option[1]['frequency']
+            filtered_df = user.query('RecencyCluster >= {} and RecencyCluster <= {} and FrequencyCluster >= {} and FrequencyCluster <= {}'
+            .format(recency_range['min'], recency_range['max'], frequency_range['min'], frequency_range['max']))
+            results["segment_results"].update({
+                name: len(filtered_df['customer_id'].values.tolist())
+            })
+        
+        return results
+
     # For API getSegmentCustomerIds
     results = []
     for name, option in filter_option.items():
@@ -116,6 +147,9 @@ def rfm_json(data, filter_option=''):
 
     return results
 
+
+
+
 @app.route("/")
 def home_view():
     return "<h1>It works</h1>"
@@ -126,6 +160,28 @@ def getSegmentsWithCount():
         try:
             data = json.loads(request.data)
             result = rfm_json(data)
+            return jsonify(result)
+        except:
+            return jsonify({'message': 'Error'})
+    else:
+        return jsonify({'message': 'The GET method is not supported for this route'})
+
+
+@app.route('/getSegmentCustomerCount', methods=['POST'])
+def getSegmentCustomerCount():
+    if request.method == 'POST':
+        data_filter = json.loads(request.data)
+
+        if "data" not in data_filter and "filters" not in data_filter:
+            return jsonify({'message': 'Data is invalid'})
+
+        data = data_filter["data"]
+        filter_option = data_filter["filters"]
+
+        if len(filter_option) == 0:
+            return jsonify({'message': 'Filter is invalid'})
+        result = rfm_json(data, filter_option, True)
+        try:
             return jsonify(result)
         except:
             return jsonify({'message': 'Error'})
@@ -146,11 +202,9 @@ def getSegmentCustomerIds():
         if len(filter_option) == 0:
             return jsonify({'message': 'Filter is invalid'})
 
-        result = rfm_json(data, filter_option)
-        return jsonify(result)
-            
         try:
-            pass
+            result = rfm_json(data, filter_option)
+            return jsonify(result)
         except:
             return jsonify({'message': 'Error'})
     else:
