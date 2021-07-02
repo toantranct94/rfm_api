@@ -92,8 +92,13 @@ def rfm_json(data, filter_option='', count=False):
     # For # API getSegmentsWithCount
 
     if filter_option == '':
+        user = order_cluster('RecencyCluster','Recency', user, False)
         recency = user.groupby(['RecencyCluster'])['customer_id'].count().set_axis([x + 1 for x in range(n_clusters)], axis='index').to_json()
+        
+        user = order_cluster('FrequencyCluster','Frequency', user, True)
         frequency = user.groupby(['FrequencyCluster'])['customer_id'].count().set_axis([x + 1 for x in range(n_clusters)], axis='index').to_json()
+        
+        user = order_cluster('MonetaryCluster','Monetary', user, False)
         monetary = user.groupby(['MonetaryCluster'])['customer_id'].count().set_axis([x + 1 for x in range(n_clusters)], axis='index').to_json()
         
         return  {
@@ -104,15 +109,17 @@ def rfm_json(data, filter_option='', count=False):
 
     # For API getSegmentCustomerCount
     if count:
+        user = order_cluster('FrequencyCluster','Frequency', user, False)
         frequency = pd.merge(df, user, on='customer_id').groupby(['FrequencyCluster'])['customer_id'].count().set_axis([x + 1 for x in range(n_clusters)], axis='index').to_json()
         recency = {}
+        user = order_cluster('RecencyCluster','Recency', user, False)
         for i in range(n_clusters):
             temp = user.query("RecencyCluster == {}".format(i))
             max_date = datetime.datetime.today() - temp["MaxPurchaseDate"].max()
             recency[str(i+1)] =  max_date.days
 
         results =   {
-                        "rfm_defenation": {
+                        "rfm_definitions": {
                             "frequency": frequency,
                             "recency": recency
                         },
