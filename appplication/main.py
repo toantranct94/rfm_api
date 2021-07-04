@@ -24,6 +24,7 @@ def order_cluster(cluster_field_name, target_field_name,data,ascending):
 
 def rfm_json(data, filter_option='', count=False):
     n_clusters = 5
+    random_state = 2020
     df = pd.json_normalize(data)
     df['created_at_date'] = pd.to_datetime(df['created_at_date'])
 
@@ -40,7 +41,7 @@ def rfm_json(data, filter_option='', count=False):
 
     #merge this dataframe to the new user dataframe
     user = pd.merge(user, max_purchase[['customer_id','Recency', 'MaxPurchaseDate']], on='customer_id')
-    kmeans = KMeans(n_clusters=n_clusters, random_state=1)
+    kmeans = KMeans(n_clusters=n_clusters, random_state=random_state)
     kmeans.fit(user[['Recency']])
     user['RecencyCluster'] = kmeans.predict(user[['Recency']])
 
@@ -49,7 +50,7 @@ def rfm_json(data, filter_option='', count=False):
     user = order_cluster('RecencyCluster', 'Recency',user,False)
     #k-means
 
-    kmeans = KMeans(n_clusters=n_clusters, random_state=1)
+    kmeans = KMeans(n_clusters=n_clusters, random_state=random_state)
     kmeans.fit(user[['Recency']])
     user['RecencyCluster'] = kmeans.predict(user[['Recency']])
 
@@ -64,25 +65,25 @@ def rfm_json(data, filter_option='', count=False):
     user = pd.merge(user, frequency, on='customer_id')
 
     #k-means
-    kmeans = KMeans(n_clusters=n_clusters, random_state=1)
+    kmeans = KMeans(n_clusters=n_clusters, random_state=random_state)
     kmeans.fit(user[['Frequency']])
     user['FrequencyCluster'] = kmeans.predict(user[['Frequency']])
 
     #order the recency cluster
-    user = order_cluster('FrequencyCluster', 'Frequency',user,True)
+    user = order_cluster('FrequencyCluster', 'Frequency',user,False)
 
     #see details of each cluster
-    user.groupby('FrequencyCluster')['Frequency'].describe()
+    # print(user.groupby('FrequencyCluster')['Frequency'].describe())
 
     #calculate revenue for each customer
-    df['Monetary'] = df['amount'] # * df['Quantity']
+    df['Monetary'] = df['amount']
     monetary = df.groupby('customer_id').Monetary.sum().reset_index()
 
     #merge it with our main dataframe
     user = pd.merge(user, monetary, on='customer_id')
 
     #apply clustering
-    kmeans = KMeans(n_clusters=n_clusters, random_state=1)
+    kmeans = KMeans(n_clusters=n_clusters, random_state=random_state)
     kmeans.fit(user[['Monetary']])
     user['MonetaryCluster'] = kmeans.predict(user[['Monetary']])
 
@@ -92,14 +93,16 @@ def rfm_json(data, filter_option='', count=False):
     # For # API getSegmentsWithCount
 
     if filter_option == '':
-        user = order_cluster('RecencyCluster','Recency', user, False)
-        recency = user.groupby(['RecencyCluster'])['customer_id'].count().set_axis([x + 1 for x in range(n_clusters)], axis='index').to_json()
-        
         user = order_cluster('FrequencyCluster','Frequency', user, True)
-        frequency = user.groupby(['FrequencyCluster'])['customer_id'].count().set_axis([x + 1 for x in range(n_clusters)], axis='index').to_json()
+
+        # user = order_cluster('RecencyCluster','Recency', user, False)
+        recency = user.groupby(['RecencyCluster'])['customer_id'].nunique().set_axis([x + 1 for x in range(n_clusters)], axis='index').to_json()
         
-        user = order_cluster('MonetaryCluster','Monetary', user, False)
-        monetary = user.groupby(['MonetaryCluster'])['customer_id'].count().set_axis([x + 1 for x in range(n_clusters)], axis='index').to_json()
+        # user = order_cluster('FrequencyCluster','Frequency', user, True)
+        frequency = user.groupby(['FrequencyCluster'])['customer_id'].nunique().set_axis([x + 1 for x in range(n_clusters)], axis='index').to_json()
+        
+        # user = order_cluster('MonetaryCluster','Monetary', user, False)
+        monetary = user.groupby(['MonetaryCluster'])['customer_id'].nunique().set_axis([x + 1 for x in range(n_clusters)], axis='index').to_json()
         
         return  {
                     'recency': recency,
@@ -109,7 +112,7 @@ def rfm_json(data, filter_option='', count=False):
 
     # For API getSegmentCustomerCount
     if count:
-        user = order_cluster('FrequencyCluster','Frequency', user, False)
+        user = order_cluster('FrequencyCluster','Frequency', user, True)
         frequency = pd.merge(df, user, on='customer_id').groupby(['FrequencyCluster'])['customer_id'].count().set_axis([x + 1 for x in range(n_clusters)], axis='index').to_json()
         recency = {}
         user = order_cluster('RecencyCluster','Recency', user, False)
@@ -134,7 +137,7 @@ def rfm_json(data, filter_option='', count=False):
             filtered_df = user.query('RecencyCluster >= {} and RecencyCluster <= {} and FrequencyCluster >= {} and FrequencyCluster <= {}'
             .format(recency_range['min'], recency_range['max'], frequency_range['min'], frequency_range['max']))
             results["segment_results"].update({
-                name: len(filtered_df['customer_id'].values.tolist())
+                name: len(set(filtered_df['customer_id'].values.tolist()))
             })
         
         return results
@@ -148,7 +151,7 @@ def rfm_json(data, filter_option='', count=False):
         .format(recency_range['min'], recency_range['max'], frequency_range['min'], frequency_range['max']))
         
         results.append({
-            name: filtered_df['customer_id'].values.tolist()
+            name: list(set(filtered_df['customer_id'].values.tolist()))
         })
         
 
@@ -164,9 +167,10 @@ def home_view():
 @app.route('/getSegmentsWithCount', methods=['POST'])
 def getSegmentsWithCount():
     if request.method == 'POST':
+        data = json.loads(request.data)
+        result = rfm_json(data)
         try:
-            data = json.loads(request.data)
-            result = rfm_json(data)
+
             return jsonify(result)
         except:
             return jsonify({'message': 'Error'})
