@@ -113,12 +113,19 @@ def rfm_json(data, filter_option='', count=False):
     # For API getSegmentCustomerCount
     if count:
         user = order_cluster('FrequencyCluster','Frequency', user, True)
-        frequency = pd.merge(df, user, on='customer_id').groupby(['FrequencyCluster'])['customer_id'].count().set_axis([x + 1 for x in range(n_clusters)], axis='index').to_json()
+        # frequency = pd.merge(df, user, on='customer_id').groupby(['FrequencyCluster'])['customer_id'].count().set_axis([x + 1 for x in range(n_clusters)], axis='index').to_json()
+
+        df_frequency = pd.merge(df, user, on='customer_id').groupby(['FrequencyCluster'])[['customer_id', 'FrequencyCluster']].apply(lambda x: x) 
+        frequency = {}
+        for i in range(n_clusters):
+            temp_frequency = df_frequency.query("FrequencyCluster == {}".format(i))
+            frequency[str(i+1)] = int(max(temp_frequency.groupby(['customer_id']).size().values))
+    
         recency = {}
         user = order_cluster('RecencyCluster','Recency', user, False)
         for i in range(n_clusters):
-            temp = user.query("RecencyCluster == {}".format(i))
-            max_date = datetime.datetime.today() - temp["MaxPurchaseDate"].max()
+            temp_recency = user.query("RecencyCluster == {}".format(i))
+            max_date = datetime.datetime.today() - temp_recency["MaxPurchaseDate"].max()
             recency[str(i+1)] =  max_date.days
 
         results =   {
@@ -170,7 +177,6 @@ def getSegmentsWithCount():
         data = json.loads(request.data)
         result = rfm_json(data)
         try:
-
             return jsonify(result)
         except:
             return jsonify({'message': 'Error'})
