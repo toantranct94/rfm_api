@@ -119,7 +119,7 @@ def rfm_json(data, filter_option='', count=False):
         frequency = {}
         for i in range(n_clusters):
             temp_frequency = df_frequency.query("FrequencyCluster == {}".format(i))
-            frequency[str(i+1)] = int(max(temp_frequency.groupby(['customer_id']).size().values))
+            frequency[str(i+1)] = int(min(temp_frequency.groupby(['customer_id']).size().values))
     
         recency = {}
         user = order_cluster('RecencyCluster','Recency', user, False)
@@ -151,14 +151,30 @@ def rfm_json(data, filter_option='', count=False):
 
     # For API getSegmentCustomerIds
     results = []
+    user = order_cluster('FrequencyCluster','Frequency', user, True)
+    user = order_cluster('RecencyCluster','Recency', user, False)
+
+    # users_count = df['customer_id'].value_counts()
+
     for name, option in filter_option.items():
         recency_range = option[0]['recency']
         frequency_range = option[1]['frequency']
-        filtered_df = user.query('RecencyCluster >= {} and RecencyCluster <= {} and FrequencyCluster >= {} and FrequencyCluster <= {}'
+        filtered_df = user.query('RecencyCluster >= {} and RecencyCluster <= {} and FrequencyCluster >= {} and FrequencyCluster < {}'
         .format(recency_range['min'], recency_range['max'], frequency_range['min'], frequency_range['max']))
         
+        # users_count = df[df['customer_id'].isin(filtered_df['customer_id'])].groupby('customer_id').count()
+        users_count = df[df['customer_id'].isin(filtered_df['customer_id'])][['customer_id']].value_counts()
+        us = []
+
+        for index, val in users_count.iteritems():
+            us.append({
+                "id": index[0],
+                "count": int(val)
+            })
+
         results.append({
-            name: list(set(filtered_df['customer_id'].values.tolist()))
+            # name: list(set(filtered_df['customer_id'].values.tolist()))
+            name: us
         })
         
 
@@ -218,10 +234,11 @@ def getSegmentCustomerIds():
 
         if len(filter_option) == 0:
             return jsonify({'message': 'Filter is invalid'})
+        result = rfm_json(data, filter_option)
+        return jsonify(result)
 
         try:
-            result = rfm_json(data, filter_option)
-            return jsonify(result)
+            pass
         except:
             return jsonify({'message': 'Error'})
     else:
