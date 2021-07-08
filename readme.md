@@ -150,7 +150,7 @@ Once the app has deployed, the API can be served as:
  - Get Segments customer id: `POST` [https://your-app-name.herokuapp.com/getSegmentCustomerIds](https://your-app-name.herokuapp.com/getSegmentCustomerIds)
 
 
-**Input**
+**Input (using algorithm)** 
 
 ```
 {
@@ -208,26 +208,145 @@ Once the app has deployed, the API can be served as:
 }
 ```
 
-**Output**
+**Input (using parameters)** 
+
+```
+{
+    "data": [
+        {
+            "index": 0,"customer_id": "vpnqlkmaoasmi",
+            "created_at_date": "2021-03-26 13:24:44.234000",
+            "order_number": "GV45919", "amount": 1990.0
+        },
+        {
+            "index": 1,
+            "customer_id": "14cslklvjwtrs",
+            "created_at_date": "2021-03-27 13:00:19.942000",
+            "order_number": "GV46095",
+            "amount": 1900.0
+        },
+        {
+            "index": 2,
+            "customer_id": "wsw4lkl6ugfaf",
+            "created_at_date": "2021-03-27 13:05:37.651000",
+            "order_number": "GV46096",
+            "amount": 500.0
+        }
+    ],
+    "filters": {
+        "segment-a": [
+            {
+                "recency": {
+                    "min": 1,
+                    "max": 2
+                }
+            },
+            {
+                "frequency": {
+                    "min": 4,
+                    "max": 5
+                }
+            }
+        ],
+        "segment-b": [
+            {
+                "recency": {
+                    "min": 1,
+                    "max": 2
+                }
+            },
+            {
+                "frequency": {
+                    "min": 4,
+                    "max": 5
+                }
+            }
+        ]
+    },
+    "scoreDefination":{
+        "scoreCount": 5,
+        "scoreValues": {
+            "recency":{
+                "1": 97,
+                "2": 72,
+                "3": 50,
+                "4": 31,
+                "5": 12
+            },
+            "frequency": {
+                "1": 1,
+                "2": 2,
+                "3": 3,
+                "4": 4,
+                "5": 7
+            }
+        }
+    }
+}
+```
+
+**Output (sample)**
 
 ```
 [
     {
         "segment-a": [
-            "1xh60cki7pkj2pqxz5",
-            "14cslkm0hn3dw",
-            "1xh60ckd7ykpciwzp2",
-            "1xh60ck9lzkk1efniw",
-            "15ee6qlkktfq4yo"
+            {
+                "count": 6,
+                "id": "15ee6qlkkwoezg4"
+            },
+            {
+                "count": 6,
+                "id": "1xh60ckfyrklm9716a"
+            },
+            {
+                "count": 6,
+                "id": "1e8sqmknga2v5u"
+            },
+            {
+                "count": 5,
+                "id": "vojwml7lkmp6jmjd"
+            },
+            {
+                "count": 5,
+                "id": "1dltlkni9qags"
+            },
+            {
+                "count": 4,
+                "id": "1xh60ckj9ckmf18rl1"
+            },
+            {
+                "count": 4,
+                "id": "1xh60ckj9ckmsol0br"
+            },
+            {
+                "count": 4,
+                "id": "1xh60ckj9ckmk5e24x"
+            },
+            {
+                "count": 4,
+                "id": "1xh60ckj9ckmk9owsx"
+            }
         ]
     },
     {
         "segment-b": [
-            "1xh60cki7pkj2pqxz5",
-            "14cslkm0hn3dw",
-            "1xh60ckd7ykpciwzp2",
-            "1xh60ck9lzkk1efniw",
-            "15ee6qlkktfq4yo"
+            {
+                "count": 11,
+                "id": "vojwml7lkmrhdfap"
+            },
+            {
+                "count": 10,
+                "id": "14cslkm0hn3dw"
+            },
+            {
+                "count": 8,
+                "id": "1xh60ck65ykmx7se8m"
+            },
+            {
+                "count": 7,
+                "id": "15ee6qlkktfq4yo"
+            }
         ]
     }
 ]
